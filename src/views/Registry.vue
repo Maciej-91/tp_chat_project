@@ -1,47 +1,45 @@
 <template>
   <div>
 		<ConnectionMenu/>
-		<div class="container">
-			<b-form @submit="onSubmit" @reset="onReset" v-if="show">
-				<b-form-group
-					id="input-group-1"
-					label="Nom d'utilisateur:"
-					label-for="input-1"
-					description=""
-				>
-					<b-form-input
-						id="input-1"
-						v-model="form.username"
-						type="username"
-						placeholder="Entrez votre nom d'utilisateur"
-						required
-					></b-form-input>
-				</b-form-group>
+    <div class="container">
+      <b-form @submit="onSubmit" @reset="onReset" v-if="show">
+        <b-form-group
+          id="input-group-1"
+          label="Nom d'utilisateur:"
+          label-for="input-1"
+          description=""
+        >
+          <b-form-input
+            id="input-1"
+            v-model="form.username"
+            type="username"
+            placeholder="Entrez votre nom d'utilisateur"
+            required
+          ></b-form-input>
+        </b-form-group>
 
-				<b-form-group id="input-group-2" label="Mot de passe:" label-for="input-2">
-					<b-form-input
-						id="input-2"
-						v-model="form.password"
-						type="password"
-						placeholder="Entrez votre mot de passe"
-						required
-					></b-form-input>
-				</b-form-group>
-
-				<div class="center">
-					<b-button type="submit" variant="primary" @click="GoToHomPage">Connection</b-button>
-				</div>
-			</b-form>
-		</div>
-	</div>
+        <b-form-group id="input-group-2" label="Mot de passe:" label-for="input-2">
+          <b-form-input
+            id="input-2"
+            v-model="form.password"
+            type="password"
+            placeholder="Entrez votre mot de passe"
+            required
+          ></b-form-input>
+        </b-form-group>
+        <div class="center">
+          <b-button type="submit" variant="primary">Enregistrer</b-button>
+        </div>
+      </b-form>
+    </div>
+  </div>
 </template>
 
 <script>
-import router from '@/router'
 import { defineComponent } from 'vue'
 import ConnectionMenu from '../components/ConnectionMenu.vue'
   export default defineComponent ({
-		name: "Connection",
+    name: "Regisrty",
 		components: {
 			ConnectionMenu
 		},
@@ -69,12 +67,9 @@ import ConnectionMenu from '../components/ConnectionMenu.vue'
         this.$nextTick(() => {
           this.show = true
         })
-      },
-			GoToHomPage() {
-				router.push('/home')
-			}
+      }
     }
-  })
+  });
 </script>
 <style scoped>
 	form {
@@ -96,7 +91,7 @@ import ConnectionMenu from '../components/ConnectionMenu.vue'
 		text-align: start;
 		margin-bottom: 1rem;
 	}
-	.center {
+  .center {
 		display: flex;
 		justify-content: center;
 	}
