@@ -36,25 +36,15 @@ export default defineComponent({
 			invalidUsername: false,
 		}
 	},
-	// computed: {
-	// 	userNameState() {
-	// 		return this.invalidUsername
-	// 	}
-	// },
+	computed: {
+    username() {
+      return store.getters.username
+    }
+	},
 	methods: {
-		// login() {
-		// 	console.log(this.username)
-		// 	const user = users.users.find((user) => user.username === this.username);
-		// 	console.log(user)
-
-		// 	if (user && user.password === this.password) {
-		// 		this.showLoginForm = false;
-		// 	} else {
-		// 		this.invalidUsername = true;
-		// 	}
-		// },
 		onSubmit(event) {
 			event.preventDefault();
+			console.log(this.username)
 			console.log(this.form.username)
 
 			axios.post('http://localhost:8090/api/user', {
