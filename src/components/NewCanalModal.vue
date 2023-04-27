@@ -7,7 +7,7 @@
 				<b-form-input v-model="canalName" placeholder="Entrez le nom du canal"></b-form-input>
 			</div>
 			<div class="selectClass">
-				<b-form-select v-model="selectedUsers" :options="users" multiple :select-size="4"></b-form-select>
+				<b-form-select v-model="selectedUsers" :options="connectedUsers" multiple :select-size="4"></b-form-select>
 				<!-- <ul>
 					<li v-for="user in connectedUsers" :key="user">{{ user }}</li>
 				</ul> -->
@@ -24,7 +24,7 @@
 <script>
 import { defineComponent } from 'vue';
 import store from '../store'
-import mqtt from 'mqtt'
+import mqttService from '@/services/MqttService';
 import axios from 'axios';
 export default defineComponent({
 	name: "NewCanalModal",
@@ -35,25 +35,27 @@ export default defineComponent({
 			canalName: '',
 			selectedUsers: [],
 			users: [],
-			connectedUsers: []
+			// connectedUsers: []
 		}
 	},
 	computed: {
 		username() {
 			return store.getters.username
 		},
-		// connectedUsers() {
-		// 	return store.getters.connectedUsers
-		// }
+		connectedUsers() {
+			const connectedUsers = store.getters.connectedUsers[0];
+			return connectedUsers.filter(username => username !== this.username);
+		}
+
 	},
 	methods: {
-		connection() {
+		/*connection() {
 			this.client = mqtt.connect('wss://31c1474781644cc99b02813714a2f9e6.s2.eu.hivemq.cloud:8884/mqtt',
 				{
 					rejectUnauthorized: false,
 					username: 'Maciej',
 					password: 'toto123456',
-					clientId: this.username,
+					// clientId: this.username,
 					protocolId: 'MQTT',
 					protocolVersion: 4,
 					clean: true,
@@ -61,11 +63,12 @@ export default defineComponent({
 					connectTimeout: 30 * 1000,
 				}
 			)
-		},
+		},*/
 		createCanal() {
-			const privateTopic = `${this.canalName}/${this.username}/${this.users.join('/')}`
+			const client = mqttService.getClient();
+			const privateTopic = `${this.canalName}/${this.username}/${this.selectedUsers.join('/')}`
 			console.log(privateTopic)
-			this.client.publish('private', privateTopic)
+			client.publish('private', privateTopic)
 			this.showModal = false;
 			this.$emit('newTopic', privateTopic)
 		},
@@ -118,10 +121,10 @@ export default defineComponent({
 		}
 	},
 	mounted() {
-		this.connection()
-		setInterval(() => {
-			this.getAllUsers()
-		}, 1000);
+		// this.connection()
+		// setInterval(() => {
+		// 	this.getAllUsers()
+		// }, 1000);
 		// console.log(this.connectedUsers)
 		// console.log(this.username)
 		// this.client.subscribe('private');

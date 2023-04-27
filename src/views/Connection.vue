@@ -2,7 +2,7 @@
 	<div>
 		<ConnectionMenu />
 		<div class="container">
-			<b-form @submit="onSubmit" @reset="onReset" v-if="show">
+			<b-form @submit="onSubmit" v-if="show">
 				<b-form-group id="input-group-1" label="Nom d'utilisateur:" label-for="input-1" description="">
 					<b-form-input id="input-1" v-model="form.username" placeholder="Entrez votre nom d'utilisateur"
 						required></b-form-input>
@@ -50,7 +50,7 @@ export default defineComponent({
 					rejectUnauthorized: false,
 					username: 'Maciej',
 					password: 'toto123456',
-					clientId: this.username,
+					// clientId: this.username,
 					protocolId: 'MQTT',
 					protocolVersion: 4,
 					clean: true,
@@ -72,45 +72,25 @@ export default defineComponent({
 		},
 		onSubmit(event) {
 			event.preventDefault();
-			// this.client.publish('utilisateurs/connectés', this.form.username )
+			this.client.publish('utilisateurs/connectés', this.form.username )
 			store.commit('setUsername', this.form.username)
 			store.commit('addConnectedUser', this.connectedUsers)
-			/*axios.post('http://localhost:8090/api/user', {
-				username: this.form.username
-			})
-				.then((response) => {
-					console.log(response);
-				})
-				.catch(function (error) {
-					console.log(error);
-				});*/
 			this.GoToHomPage()
-		},
-		onReset(event) {
-			event.preventDefault()
-			// Reset our form values
-			this.form.username = ''
-			this.form.password = ''
-			// Trick to reset/clear native browser form validation state
-			this.show = false
-			this.$nextTick(() => {
-				this.show = true
-			})
 		},
 		GoToHomPage() {
 			router.push('/home')
 		}
 	},
 	mounted() {
-		// this.connection()
-		// this.client.subscribe('#');
-		// this.client.on('message', (topic, message) => {
-		// 	if(topic === 'utilisateurs/connectés') {
-		// 		console.log(topic)
-		// 		console.log(message.toString())
-		// 		this.addUser(message.toString())
-		// 	}
-		// })
+		this.connection()
+		this.client.subscribe('#');
+		this.client.on('message', (topic, message) => {
+			if(topic === 'utilisateurs/connectés') {
+				console.log(topic)
+				console.log(message.toString())
+				this.addUser(message.toString())
+			}
+		})
 	}
 })
 </script>
