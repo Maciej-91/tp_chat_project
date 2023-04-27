@@ -57,7 +57,8 @@
 
 <script>
 import { defineComponent } from 'vue';
-import mqtt from 'mqtt'
+import mqttService from '@/services/MqttService';
+
 import store from '../store'
 import DiscussionCanals from '../components/DiscussionCanals.vue';
 
@@ -83,18 +84,18 @@ export default defineComponent({
 		username() {
 			return store.getters.username
 		},
-		// connectedUsers() {
-		// 	return store.getters.connectedUsers
-		// }
+		connectedUsers() {
+			return store.getters.connectedUsers
+		}
 	},
 	methods: {
-		connection() {
+		/*connection() {
 			this.client = mqtt.connect('wss://31c1474781644cc99b02813714a2f9e6.s2.eu.hivemq.cloud:8884/mqtt',
 				{
 					rejectUnauthorized: false,
 					username: 'Maciej',
 					password: 'toto123456',
-					clientId: this.username,
+					// clientId: this.username,
 					protocolId: 'MQTT',
 					protocolVersion: 4,
 					clean: true,
@@ -107,27 +108,21 @@ export default defineComponent({
 				console.log('Connected to MQTT broker');
 				this.isConnected = true;
 			});
-
-			this.client.on('message', (topic, message) => {
-				console.log(`Received message on topic ${topic}: ${message.toString()}`);
-			});
-
-			this.client.on('error', (err) => {
-				console.error('Error connecting to MQTT broker', err);
-				this.isConnected = false;
-			});
-		},
+		},*/
 		sendMessage(event) {
+			const client = mqttService.getClient();
+
+			console.log(this.connectedUsers)
 			event.preventDefault()
-			if (this.isConnected) {
+			// if (this.isConnected) {
 				let now = new Date()
 				let hour = now.getHours()
 				let min = now.getMinutes().toString().padStart(2, '0');
 				this.time = hour + "h" + min
-				this.client.publish(this.topic, `${this.username}:${this.inputMessage}:${this.time}`)
-			} else {
-				console.error('not send message')
-			}
+				client.publish(this.topic, `${this.username}:${this.inputMessage}:${this.time}`)
+			// } else {
+			// 	console.error('not send message')
+			// }
 		},
 		scrollToBottom() {
 			this.$nextTick(() => {
@@ -135,23 +130,14 @@ export default defineComponent({
 				chatContainer.scrollTop = chatContainer.scrollHeight;
 			});
 		},
-		/*addUser(user) {
-			console.log("adduser")
-			console.log(user)
-			this.connectedUsers.push(user);
-			this.updateConnectedUsers();
-			console.log(this.connectedUsers)
-		},
-		updateConnectedUsers() {
-			const message = JSON.stringify(this.connectedUsers);
-			this.client.publish('utilisateurs/connectes', message);
-		},*/
 	},
 	mounted() {
-		this.connection();
+		//this.connection();
+		const client = mqttService.getClient();
+
 		// this.addUser(this.username)
-		this.client.subscribe('#');
-		this.client.on('message', (topic, message) => {
+		client.subscribe('my-topic');
+		client.on('message', (topic, message) => {
 			// if(topic === 'utilisateurs/connectés') {
 			// 	console.log(topic)
 			// 	console.log(message)
@@ -184,6 +170,10 @@ export default defineComponent({
 		// 	this.inputMessage = "";
 		// });
 	},
+	created() {
+		mqttService.connect('Maciej', 'toto123456');
+	}
+
 })
 </script>
 <style scoped>

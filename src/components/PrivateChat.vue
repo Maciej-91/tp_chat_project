@@ -7,9 +7,21 @@
 					</div>-->
 					<div class="card-body" style="max-height: 500px; overflow: auto;">
 						<ul class="list-unstyled">
-							<li>
-								<p>youyou</p>
-							</li>
+							<p v-if="this.messages.length === 0" style="text-align: center;">Soyez le premiez à envoyer un
+								message <span class="bold">{{ this.username }}</span></p>
+								<li v-for="(mess, index) in this.messages" v-bind:key="index">
+									<div
+										:class="username === mess.split(':')[0] ? 'containerUserConnected' : 'containerUser'">
+										<div :class="username === mess.split(':')[0] ? ' userConnected' : 'user'">
+											<p class="usernameP">{{ mess.split(":")[0] }}</p>
+										</div>
+									</div>
+									<div
+										:class="username.trim() === mess.split(':')[0].trim() ? 'textContentConnected' : 'textContent'">
+										<p class="borderText">{{ mess.split(":")[1] }}<br><span class="time">{{
+											mess.split(":")[2] }}</span></p>
+									</div>
+								</li>
 							<!-- <p v-if="this.messages.length === 0" style="text-align: center;">Soyez le premiez à envoyer un
 								message <span class="bold">{{ this.username }}</span></p> -->
 							<!-- <li v-for="(mess, index) in this.messages" v-bind:key="index">
@@ -47,16 +59,17 @@
 <script>
 import { defineComponent } from 'vue';
 import store from '../store'
-import mqtt from 'mqtt'
+import mqttService from '@/services/MqttService';
 
 export default defineComponent({
 	name: "PrivateChat",
 	props: ["concernedTopic"],
 	data() {
 		return {
-			inputMessage: "",
 			client: null,
-			concernedTopic: this.$props.concernedTopic
+			concernedTopic: this.$props.concernedTopic,
+			messages: [],
+			inputMessage: ""
 		}
 	},
 	computed: {
@@ -65,28 +78,15 @@ export default defineComponent({
 		}
 	},
 	methods: {
-		connection() {
-			this.client = mqtt.connect('wss://31c1474781644cc99b02813714a2f9e6.s2.eu.hivemq.cloud:8884/mqtt',
-				{
-					rejectUnauthorized: false,
-					username: 'Maciej',
-					password: 'toto123456',
-					clientId: this.username,
-					protocolId: 'MQTT',
-					protocolVersion: 4,
-					clean: true,
-					reconnectPeriod: 1000,
-					connectTimeout: 30 * 1000,
-				}
-			)
-		},
 		sendMessage(event) {
 			event.preventDefault()
+			console.log(this.concernedTopic)
+			const client = mqttService.getClient();
 			let now = new Date()
 				let hour = now.getHours()
 				let min = now.getMinutes().toString().padStart(2, '0');
 				this.time = hour + "h" + min
-				this.client.publish(this.concernedTopic, `${this.username}:${this.inputMessage}:${this.time}`)
+				client.publish(this.concernedTopic, `${this.username}:${this.inputMessage}:${this.time}`)
 		},
 		/*connectWebSocket() {
 			console.log(this.concernedTopic)
@@ -114,6 +114,12 @@ export default defineComponent({
 		console.log("private component created")
 	},
 	mounted() {
+		console.log(this.concernedTopic)
+		const client = mqttService.getClient();
+		client.subscribe(this.concernedTopic);
+		client.on('message', (topic, message) => {
+			this.messages.push(message.toString());
+		})
 		// console.log(this.concernedTopic)
 		// this.connection();
 		// this.client.subscribe(this.concernedTopic);
