@@ -66,10 +66,6 @@ export default defineComponent({
 				client.subscribe('private')
 			})
 			client.on('message', (topic) => {
-				const usersInTopicList = topic.split("/")
-				if (usersInTopicList.includes(this.username)) {
-					console.log(`${this.username} is in the topic list.`)
-				}
 				if (!this.topics.includes(topic)) {
 					this.topics.push(topic.split("/")[0])
 				}

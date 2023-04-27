@@ -6,9 +6,9 @@
 					<b-form-input id="input-1" v-model="form.username" placeholder="Entrez votre nom d'utilisateur"
 						required></b-form-input>
 				</b-form-group>
-
+				<p class="errorMessage" v-if="userAlreadyExist">l'utilisateur existe déjà</p>
 				<div class="center">
-					<b-button type="submit" variant="primary">Connection</b-button>
+					<b-button type="submit" variant="primary">Connexion</b-button>
 				</div>
 			</b-form>
 		</div>
@@ -31,13 +31,17 @@ export default defineComponent({
 			show: true,
 			invalidUsername: false,
 			client: null,
-			connectedUsers: []
+			connectUsers: [],
+			userAlreadyExist: false
 		}
 	},
 	computed: {
-    username() {
-      return store.getters.username
-    }
+		username() {
+			return store.getters.username
+		},
+		connectedUsers() {
+			return store.getters.connectedUsers[0]
+		},
 	},
 	methods: {
 		connection() {
@@ -55,19 +59,26 @@ export default defineComponent({
 			)
 		},
 		addUser(user) {
-			this.connectedUsers.push(user);
-			this.updateConnectedUsers();
+			this.connectUsers.push(user);
+			this.updateconnectUsers();
 		},
-		updateConnectedUsers() {
-			const message = JSON.stringify(this.connectedUsers);
+		updateconnectUsers() {
+			const message = JSON.stringify(this.connectUsers);
 			this.client.publish('utilisateurs/connectes', message);
 		},
 		onSubmit(event) {
 			event.preventDefault();
-			this.client.publish('utilisateurs/connectés', this.form.username )
 			store.commit('setUsername', this.form.username)
-			store.commit('addConnectedUser', this.connectedUsers)
-			this.GoToHomPage()
+			store.commit('addConnectedUser', this.connectUsers)
+			if(this.connectedUsers.includes(this.form.username)) {
+				setTimeout(() => {
+					this.userAlreadyExist = false
+				}, 2000);
+				this.userAlreadyExist = true
+			} else {
+				this.client.publish('utilisateurs/connectés', this.form.username )
+				this.GoToHomPage()
+			}
 		},
 		GoToHomPage() {
 			router.push('/home')
@@ -114,5 +125,10 @@ form {
 .center {
 	display: flex;
 	justify-content: center;
+}
+.errorMessage {
+	color: red;
+	text-align: center;
+	margin-top: -1rem;
 }
 </style>

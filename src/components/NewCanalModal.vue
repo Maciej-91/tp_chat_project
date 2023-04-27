@@ -45,11 +45,16 @@ export default defineComponent({
 	},
 	methods: {
 		createCanal() {
-			const client = mqttService.getClient();
-			const privateTopic = `${this.canalName}/${this.username}/${this.selectedUsers.join('/')}`
-			client.publish('private', privateTopic)
-			this.showModal = false;
-			this.$emit('newTopic', privateTopic)
+			if(this.canalName === '' || this.selectedUsers.length === 0) {
+				return
+			} else {
+				const client = mqttService.getClient();
+				const privateTopic = `${this.canalName}/${this.username}/${this.selectedUsers.join('/')}`
+				client.publish('private', privateTopic)
+				this.showModal = false;
+				this.$emit('newTopic', privateTopic)
+				this.canalName = ""
+			}
 		},
 	},
 })
