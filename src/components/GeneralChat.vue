@@ -9,23 +9,9 @@
 						<ul class="list-unstyled">
 							<p v-if="this.messages.length === 0" style="text-align: center;">Soyez le premiez à envoyer un
 								message <span class="bold">{{ this.username }}</span></p>
-								<li v-for="(mess, index) in this.messages" v-bind:key="index">
-									<div
-										:class="username === mess.split(':')[0] ? 'containerUserConnected' : 'containerUser'">
-										<div :class="username === mess.split(':')[0] ? ' userConnected' : 'user'">
-											<p class="usernameP">{{ mess.split(":")[0] }}</p>
-										</div>
-									</div>
-									<div
-										:class="username.trim() === mess.split(':')[0].trim() ? 'textContentConnected' : 'textContent'">
-										<p class="borderText">{{ mess.split(":")[1] }}<br><span class="time">{{
-											mess.split(":")[2] }}</span></p>
-									</div>
-								</li>
-							<!--<li v-for="(mess, index) in this.messages" v-bind:key="index">
-								<div
-									:class="username.trim() === mess.split(':')[0].trim() ? 'containerUserConnected' : 'containerUser'">
-									<div :class="username.trim() === mess.split(':')[0].trim() ? ' userConnected' : 'user'">
+							<li v-for="(mess, index) in this.messages" v-bind:key="index">
+								<div :class="username === mess.split(':')[0] ? 'containerUserConnected' : 'containerUser'">
+									<div :class="username === mess.split(':')[0] ? ' userConnected' : 'user'">
 										<p class="usernameP">{{ mess.split(":")[0] }}</p>
 									</div>
 								</div>
@@ -34,7 +20,7 @@
 									<p class="borderText">{{ mess.split(":")[1] }}<br><span class="time">{{
 										mess.split(":")[2] }}</span></p>
 								</div>
-							</li>-->
+							</li>
 						</ul>
 					</div>
 				</div>
@@ -50,7 +36,6 @@
 					</form>
 				</div>
 			</div>
-			<DiscussionCanals :topicList="topicList" />
 		</div>
 	</div>
 </template>
@@ -58,15 +43,10 @@
 <script>
 import { defineComponent } from 'vue';
 import mqttService from '@/services/MqttService';
-
 import store from '../store'
-import DiscussionCanals from '../components/DiscussionCanals.vue';
 
 export default defineComponent({
 	name: "GeneralChat",
-	components: {
-		DiscussionCanals,
-	},
 	data() {
 		return {
 			inputMessage: "",
@@ -75,9 +55,7 @@ export default defineComponent({
 			topicList: [],
 			client: null,
 			isConnected: false,
-			message: '',
 			topic: 'my-topic',
-			//connectedUsers: []
 		}
 	},
 	computed: {
@@ -86,43 +64,21 @@ export default defineComponent({
 		},
 		connectedUsers() {
 			return store.getters.connectedUsers
-		}
+		},
 	},
 	methods: {
-		/*connection() {
-			this.client = mqtt.connect('wss://31c1474781644cc99b02813714a2f9e6.s2.eu.hivemq.cloud:8884/mqtt',
-				{
-					rejectUnauthorized: false,
-					username: 'Maciej',
-					password: 'toto123456',
-					// clientId: this.username,
-					protocolId: 'MQTT',
-					protocolVersion: 4,
-					clean: true,
-					reconnectPeriod: 1000,
-					connectTimeout: 30 * 1000,
-				}
-			)
-
-			this.client.on('connect', () => {
-				console.log('Connected to MQTT broker');
-				this.isConnected = true;
-			});
-		},*/
 		sendMessage(event) {
 			const client = mqttService.getClient();
-
-			console.log(this.connectedUsers)
 			event.preventDefault()
-			// if (this.isConnected) {
+			if (this.inputMessage.trim() === '') {
+				return;
+			} else {
 				let now = new Date()
 				let hour = now.getHours()
 				let min = now.getMinutes().toString().padStart(2, '0');
 				this.time = hour + "h" + min
 				client.publish(this.topic, `${this.username}:${this.inputMessage}:${this.time}`)
-			// } else {
-			// 	console.error('not send message')
-			// }
+			}
 		},
 		scrollToBottom() {
 			this.$nextTick(() => {
@@ -132,48 +88,23 @@ export default defineComponent({
 		},
 	},
 	mounted() {
-		//this.connection();
 		const client = mqttService.getClient();
-
-		// this.addUser(this.username)
-		client.subscribe('my-topic');
+		client.subscribe('my-topic', { qos: 2 });
 		client.on('message', (topic, message) => {
-			// if(topic === 'utilisateurs/connectés') {
-			// 	console.log(topic)
-			// 	console.log(message)
-			// 	//this.addUser(message.toString())
-			// 	this.connectedUsers = message.toString();
-			// }
-			if(topic === 'my-topic') {
-				console.log(topic)
-				console.log(message)
-				console.log(`Received message on topic ${topic}: ${message.toString()}`);
-				// Mettez à jour la liste des messages avec le nouveau message reçu
+			if (topic === 'my-topic') {
 				this.messages.push(message.toString());
 				setTimeout(() => {
 					this.scrollToBottom();
-					}, 100);
+				}, 100);
 				this.inputMessage = "";
 			}
 		});
-			console.log(this.connectedUsers)
-		// this.client.subscribe('my-topic');
-		// this.client.on('message', (topic, message) => {
-		// 	console.log(topic)
-		// 	console.log(message)
-		// 	console.log(`Received message on topic ${topic}: ${message.toString()}`);
-		// 	// Mettez à jour la liste des messages avec le nouveau message reçu
-		// 	this.messages.push(message.toString());
-		// 	setTimeout(() => {
-		// 		this.scrollToBottom();
-		// 		}, 100);
-		// 	this.inputMessage = "";
-		// });
 	},
 	created() {
-		mqttService.connect('Maciej', 'toto123456');
-	}
+		console.log("generalChat created")
+		console.log(this.messages)
 
+	},
 })
 </script>
 <style scoped>

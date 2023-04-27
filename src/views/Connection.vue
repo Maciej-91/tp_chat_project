@@ -1,6 +1,5 @@
 <template>
 	<div>
-		<ConnectionMenu />
 		<div class="container">
 			<b-form @submit="onSubmit" v-if="show">
 				<b-form-group id="input-group-1" label="Nom d'utilisateur:" label-for="input-1" description="">
@@ -19,14 +18,11 @@
 <script>
 import router from '@/router';
 import { defineComponent } from 'vue';
-import ConnectionMenu from '../components/ConnectionMenu.vue';
 import store from '../store'
 import mqtt from 'mqtt'
+import mqttService from '@/services/MqttService';
 export default defineComponent({
 	name: "Connection",
-	components: {
-		ConnectionMenu
-	},
 	data() {
 		return {
 			form: {
@@ -50,7 +46,6 @@ export default defineComponent({
 					rejectUnauthorized: false,
 					username: 'Maciej',
 					password: 'toto123456',
-					// clientId: this.username,
 					protocolId: 'MQTT',
 					protocolVersion: 4,
 					clean: true,
@@ -60,11 +55,8 @@ export default defineComponent({
 			)
 		},
 		addUser(user) {
-			console.log("adduser")
-			console.log(user)
 			this.connectedUsers.push(user);
 			this.updateConnectedUsers();
-			console.log(this.connectedUsers)
 		},
 		updateConnectedUsers() {
 			const message = JSON.stringify(this.connectedUsers);
@@ -86,11 +78,12 @@ export default defineComponent({
 		this.client.subscribe('#');
 		this.client.on('message', (topic, message) => {
 			if(topic === 'utilisateurs/connectés') {
-				console.log(topic)
-				console.log(message.toString())
 				this.addUser(message.toString())
 			}
 		})
+	},
+	created() {
+		mqttService.connect('Maciej', 'toto123456');
 	}
 })
 </script>

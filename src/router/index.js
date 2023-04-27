@@ -1,7 +1,6 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Connection from '../views/Connection.vue'
-import Registry from '../views/Registry.vue'
 import Home from '../views/Home.vue'
 import DiscussionCanals from "../components/DiscussionCanals.vue"
 import PrivateChat from "../components/PrivateChat.vue"
@@ -15,15 +14,6 @@ export default new VueRouter({
       path: '/',
       name: 'Connection',
       component: Connection
-    },
-    {
-      path: '/registry',
-      name: 'Registry',
-      component: Registry
-      // route level code-splitting
-      // this generates a separate chunk (about.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      //component: () => import(/* webpackChunkName: "about" */ '../views/Registry.vue')
     },
     {
       path: '/home',
