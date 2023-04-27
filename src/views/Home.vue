@@ -1,19 +1,21 @@
 <template>
   <div class="home">
     <NavBar />
-    <GeneralChat />
+    <div>
+      <DiscussionCanals />
+    </div>
   </div>
 </template>
 
 <script>
 // @ is an alias to /src
 import NavBar from '@/components/NavBar.vue'
-import GeneralChat from '@/components/GeneralChat.vue'
+import DiscussionCanals from '@/components/DiscussionCanals.vue'
 export default {
   name: 'Home',
   components: {
     NavBar,
-    GeneralChat
+    DiscussionCanals
   }
 }
 </script>

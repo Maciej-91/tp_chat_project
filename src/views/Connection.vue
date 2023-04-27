@@ -20,8 +20,8 @@
 import router from '@/router';
 import { defineComponent } from 'vue';
 import ConnectionMenu from '../components/ConnectionMenu.vue';
-import axios from 'axios';
 import store from '../store'
+import mqtt from 'mqtt'
 export default defineComponent({
 	name: "Connection",
 	components: {
@@ -34,6 +34,8 @@ export default defineComponent({
 			},
 			show: true,
 			invalidUsername: false,
+			client: null,
+			connectedUsers: []
 		}
 	},
 	computed: {
@@ -42,25 +44,47 @@ export default defineComponent({
     }
 	},
 	methods: {
+		connection() {
+			this.client = mqtt.connect('wss://31c1474781644cc99b02813714a2f9e6.s2.eu.hivemq.cloud:8884/mqtt',
+				{
+					rejectUnauthorized: false,
+					username: 'Maciej',
+					password: 'toto123456',
+					clientId: this.username,
+					protocolId: 'MQTT',
+					protocolVersion: 4,
+					clean: true,
+					reconnectPeriod: 1000,
+					connectTimeout: 30 * 1000,
+				}
+			)
+		},
+		addUser(user) {
+			console.log("adduser")
+			console.log(user)
+			this.connectedUsers.push(user);
+			this.updateConnectedUsers();
+			console.log(this.connectedUsers)
+		},
+		updateConnectedUsers() {
+			const message = JSON.stringify(this.connectedUsers);
+			this.client.publish('utilisateurs/connectes', message);
+		},
 		onSubmit(event) {
 			event.preventDefault();
-			console.log(this.username)
-			console.log(this.form.username)
-
-			axios.post('http://localhost:8090/api/user', {
+			// this.client.publish('utilisateurs/connectés', this.form.username )
+			store.commit('setUsername', this.form.username)
+			store.commit('addConnectedUser', this.connectedUsers)
+			/*axios.post('http://localhost:8090/api/user', {
 				username: this.form.username
 			})
 				.then((response) => {
 					console.log(response);
-					if(response.data === "Utilisateur enregistré avec succès") {
-						console.log("Utilisateur enregistré avec succès")
-						store.commit('setUsername', this.form.username)
-						this.GoToHomPage()
-					}
 				})
 				.catch(function (error) {
 					console.log(error);
-				});
+				});*/
+			this.GoToHomPage()
 		},
 		onReset(event) {
 			event.preventDefault()
@@ -76,6 +100,17 @@ export default defineComponent({
 		GoToHomPage() {
 			router.push('/home')
 		}
+	},
+	mounted() {
+		// this.connection()
+		// this.client.subscribe('#');
+		// this.client.on('message', (topic, message) => {
+		// 	if(topic === 'utilisateurs/connectés') {
+		// 		console.log(topic)
+		// 		console.log(message.toString())
+		// 		this.addUser(message.toString())
+		// 	}
+		// })
 	}
 })
 </script>

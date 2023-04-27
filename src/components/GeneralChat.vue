@@ -1,7 +1,7 @@
 <template>
 	<div class="container">
 		<div class="subContainer">
-			<div class="col-md-8">
+			<div class="col-md-8" style="margin-left: 25%;">
 				<div class="card">
 					<div class="card-header">Bienvenue dans le Chat général <span class="bold">{{ this.username }}</span>
 					</div>
@@ -9,7 +9,20 @@
 						<ul class="list-unstyled">
 							<p v-if="this.messages.length === 0" style="text-align: center;">Soyez le premiez à envoyer un
 								message <span class="bold">{{ this.username }}</span></p>
-							<li v-for="(mess, index) in this.messages" v-bind:key="index">
+								<li v-for="(mess, index) in this.messages" v-bind:key="index">
+									<div
+										:class="username === mess.split(':')[0] ? 'containerUserConnected' : 'containerUser'">
+										<div :class="username === mess.split(':')[0] ? ' userConnected' : 'user'">
+											<p class="usernameP">{{ mess.split(":")[0] }}</p>
+										</div>
+									</div>
+									<div
+										:class="username.trim() === mess.split(':')[0].trim() ? 'textContentConnected' : 'textContent'">
+										<p class="borderText">{{ mess.split(":")[1] }}<br><span class="time">{{
+											mess.split(":")[2] }}</span></p>
+									</div>
+								</li>
+							<!--<li v-for="(mess, index) in this.messages" v-bind:key="index">
 								<div
 									:class="username.trim() === mess.split(':')[0].trim() ? 'containerUserConnected' : 'containerUser'">
 									<div :class="username.trim() === mess.split(':')[0].trim() ? ' userConnected' : 'user'">
@@ -21,7 +34,7 @@
 									<p class="borderText">{{ mess.split(":")[1] }}<br><span class="time">{{
 										mess.split(":")[2] }}</span></p>
 								</div>
-							</li>
+							</li>-->
 						</ul>
 					</div>
 				</div>
@@ -37,15 +50,14 @@
 					</form>
 				</div>
 			</div>
-			<DiscussionCanals
-				:topicList="topicList" />
+			<DiscussionCanals :topicList="topicList" />
 		</div>
 	</div>
 </template>
 
 <script>
 import { defineComponent } from 'vue';
-import axios from 'axios';
+import mqtt from 'mqtt'
 import store from '../store'
 import DiscussionCanals from '../components/DiscussionCanals.vue';
 
@@ -59,98 +71,126 @@ export default defineComponent({
 			inputMessage: "",
 			messages: [],
 			time: "",
-			topicList: []
-			/*topicWithUser: [
-				{
-					topic: "",
-					users: [],
-				}
-			],*/
+			topicList: [],
+			client: null,
+			isConnected: false,
+			message: '',
+			topic: 'my-topic',
+			//connectedUsers: []
 		}
 	},
 	computed: {
 		username() {
 			return store.getters.username
-		}
+		},
+		// connectedUsers() {
+		// 	return store.getters.connectedUsers
+		// }
 	},
 	methods: {
+		connection() {
+			this.client = mqtt.connect('wss://31c1474781644cc99b02813714a2f9e6.s2.eu.hivemq.cloud:8884/mqtt',
+				{
+					rejectUnauthorized: false,
+					username: 'Maciej',
+					password: 'toto123456',
+					clientId: this.username,
+					protocolId: 'MQTT',
+					protocolVersion: 4,
+					clean: true,
+					reconnectPeriod: 1000,
+					connectTimeout: 30 * 1000,
+				}
+			)
+
+			this.client.on('connect', () => {
+				console.log('Connected to MQTT broker');
+				this.isConnected = true;
+			});
+
+			this.client.on('message', (topic, message) => {
+				console.log(`Received message on topic ${topic}: ${message.toString()}`);
+			});
+
+			this.client.on('error', (err) => {
+				console.error('Error connecting to MQTT broker', err);
+				this.isConnected = false;
+			});
+		},
 		sendMessage(event) {
 			event.preventDefault()
-
-			let now = new Date()
-			let hour = now.getHours()
-			let min = now.getMinutes()
-			this.time = hour + "h" + min
-			axios.post('http://localhost:8090/api/publish', {
-				topic: "generalChat",
-				message: this.username + " : " + this.inputMessage + " : " + this.time
-			})
-				.then((response) => {
-					console.log(response);
-				})
-				.catch(function (error) {
-					console.log(error);
-				});
-			console.log(this.messages)
-			this.inputMessage = ""
+			if (this.isConnected) {
+				let now = new Date()
+				let hour = now.getHours()
+				let min = now.getMinutes().toString().padStart(2, '0');
+				this.time = hour + "h" + min
+				this.client.publish(this.topic, `${this.username}:${this.inputMessage}:${this.time}`)
+			} else {
+				console.error('not send message')
+			}
 		},
 		scrollToBottom() {
-			const chatContainer = document.querySelector('.card-body');
-			chatContainer.scrollTop = chatContainer.scrollHeight;
-		}
+			this.$nextTick(() => {
+				const chatContainer = document.querySelector('.card-body');
+				chatContainer.scrollTop = chatContainer.scrollHeight;
+			});
+		},
+		/*addUser(user) {
+			console.log("adduser")
+			console.log(user)
+			this.connectedUsers.push(user);
+			this.updateConnectedUsers();
+			console.log(this.connectedUsers)
+		},
+		updateConnectedUsers() {
+			const message = JSON.stringify(this.connectedUsers);
+			this.client.publish('utilisateurs/connectes', message);
+		},*/
 	},
 	mounted() {
-		setInterval(() => {
-			axios.get('http://localhost:8090/api/generalChat')
-				.then(response => {
-					// console.log(response)
-					// console.log(response.data)
-					this.messages = response.data;
-				})
-				.catch(error => {
-					console.error(error);
-				});
-		}, 1000);
-
-		setInterval(() => {
-			axios.get('http://localhost:8090/api/canals')
-				.then(response => {
-					console.log(response)
-					console.log(response.data)
-					console.log(this.username)
-					for (let i = 0; i < response.data.length; i++) {
-						for (let j = 0; j < response.data[i].users.length; j++) {
-							//let users = response.data[i].users;
-						//	console.log(users)
-							if (response.data[i].users[j].includes(this.username)) {
-								console.log(this.username, "est dans la liste des utilisateurs pour le topic");
-								this.topicList = response.data[i].topic
-							} else {
-								console.log(this.username, "n'est pas dans la liste des utilisateurs pour le topic");
-							}
-						}
-					}
-				})
-				.catch(error => {
-					console.error(error);
-				});
-		console.log("this.topicList ",this.topicList)
-		}, 2000);
-	},
-	watch: {
-		messages(newMessages, oldMessages) {
-			if (newMessages.length > oldMessages.length) {
-				this.$nextTick(() => {
+		this.connection();
+		// this.addUser(this.username)
+		this.client.subscribe('#');
+		this.client.on('message', (topic, message) => {
+			// if(topic === 'utilisateurs/connectés') {
+			// 	console.log(topic)
+			// 	console.log(message)
+			// 	//this.addUser(message.toString())
+			// 	this.connectedUsers = message.toString();
+			// }
+			if(topic === 'my-topic') {
+				console.log(topic)
+				console.log(message)
+				console.log(`Received message on topic ${topic}: ${message.toString()}`);
+				// Mettez à jour la liste des messages avec le nouveau message reçu
+				this.messages.push(message.toString());
+				setTimeout(() => {
 					this.scrollToBottom();
-				});
+					}, 100);
+				this.inputMessage = "";
 			}
-		}
+		});
+			console.log(this.connectedUsers)
+		// this.client.subscribe('my-topic');
+		// this.client.on('message', (topic, message) => {
+		// 	console.log(topic)
+		// 	console.log(message)
+		// 	console.log(`Received message on topic ${topic}: ${message.toString()}`);
+		// 	// Mettez à jour la liste des messages avec le nouveau message reçu
+		// 	this.messages.push(message.toString());
+		// 	setTimeout(() => {
+		// 		this.scrollToBottom();
+		// 		}, 100);
+		// 	this.inputMessage = "";
+		// });
 	},
 })
 </script>
 <style scoped>
 .container {
 	margin-top: 5rem;
+	margin-left: 0;
+	margin-right: 0;
 }
 
 .subContainer {
