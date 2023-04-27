@@ -100,11 +100,6 @@ export default defineComponent({
 			}
 		});
 	},
-	created() {
-		console.log("generalChat created")
-		console.log(this.messages)
-
-	},
 })
 </script>
 <style scoped>
